@@ -1,6 +1,6 @@
 import streamlit as st
 import openai
-import os
+import os, base64
 from gtts import gTTS
 from translate import Translator
 from dotenv import load_dotenv
@@ -59,16 +59,61 @@ def get_chat_response(message):
     )
     return response.choices[0].text.strip()
 
-def app():
-    st.header('Healthcare Query')
+
+def get_base64(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
+
+def set_background(png_file):
+    bin_str = get_base64(png_file)
+    page_bg_img = '''
+    <style>
+    .stApp {
+        background-image: url("data:image/png;base64,%s");
+        background-size:  1925px 950px;
+    }
+    .stApp > div > div, .dataframe-container {
+        background-color: rgba(255, 255, 255, 0.85);
+        padding: 20px;
+        border-radius: 10px;
+    }
+    </style>
+    ''' % bin_str
+    st.markdown(page_bg_img, unsafe_allow_html=True)
+
+def sidebar_bg(side_bg):
+
+   side_bg_ext = 'png'
+
+   st.markdown(
+      f"""
+      <style>
+      [data-testid="stSidebar"] > div:first-child {{
+          background: url(data:image/{side_bg_ext};base64,{base64.b64encode(open(side_bg, "rb").read()).decode()});
+          background-size:  600px 955px;
+      }}
+      </style>
+      """,
+      unsafe_allow_html=True,
+      )
+   
     
-    st.subheader('Ask anything about your health.')
 
+def app():
+    set_background('denoised_aipictureResized-PhotoRoom (2).png')
+    sidebar_bg('AiDoc.jpg')
+    st.markdown("<h1 style='text-align: center; color: white;'>Healthcare Query</h1>"
+                        "<h1 style='text-align: center; color: white;'>Ask anything about your health.</h1>", unsafe_allow_html=True)
+    
+    
+    
 
-    user_input = st.text_input("Ask a health-related question:")
-    if user_input:
-        response = get_chat_response(user_input)
-        st.write(response)
+    with st.expander("Ask a health-related question in box below:"):
+        user_input = st.text_input("")
+        if user_input:
+            response = get_chat_response(user_input)
+            st.info(response)
     with st.expander("Get Translation"):
         lang = st.text_input('Please provide desired language')
         if lang != '':
